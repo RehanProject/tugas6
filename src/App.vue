@@ -18,8 +18,8 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from 'vue';
-import axios from './axios'; // Import Axios instance
+import { ref, reactive } from 'vue';
+import axios from 'axios';
 
 export default {
   setup() {
@@ -80,17 +80,10 @@ export default {
       }
     }
 
-    onMounted(load); // Panggil fungsi load saat komponen dipasang
-
-    return { form, articles, save, del, load };
+    return { form, articles, save, del, load, edit };
   },
 };
 </script>
-
-<style scoped>
-/* Style komponen Vue */
-</style>
-
 
 
 <style scoped>
