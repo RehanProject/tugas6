@@ -51,7 +51,7 @@ export default {
     }
 
     async function load() {
-  console.log('Load button clicked');
+  console.log ('Load button clicked');
   try {
     const response = await axios.get('http://localhost:3000/articles');
     articles.value = response.data;
@@ -62,7 +62,7 @@ export default {
 }
 
 async function del(id) {
-  console.log('Delete button clicked for article with id:', id);
+  console.log ('Delete button clicked for article with id:', id);
   try {
     await axios.delete(`http://localhost:3000/articles/${id}`);
     articles.value = articles.value.filter(article => article.id !== id);
