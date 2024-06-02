@@ -18,8 +18,7 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue';
-import axios from 'axios';
+import axios from './axios';
 
 export default {
   setup() {
@@ -80,10 +79,14 @@ export default {
       }
     }
 
+    // Panggil fungsi load saat komponen dipasang
+    onMounted(load);
+
     return { form, articles, save, del, load };
   },
 };
 </script>
+
 
 <style scoped>
 .container {
