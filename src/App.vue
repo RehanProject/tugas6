@@ -1,6 +1,7 @@
 <template>
   <div class="container">
     <form @submit.prevent="save" class="form">
+      <input type="number" v-model="form.id" placeholder="ID" class="input"/><br />
       <input type="text" v-model="form.title" placeholder="Title" class="input"/><br />
       <textarea v-model="form.content" placeholder="Content" class="textarea"></textarea><br />
       <button type="submit" class="btn btn-save">Save</button>
@@ -39,9 +40,15 @@ export default {
         const method = form.id ? 'put' : 'post';
         const response = await axios({ url, method, data: form });
         
-        articles.value = articles.value.filter(article => article.id !== form.id);
-        articles.value.push(response.data);
-        
+        if (form.id) {
+          const index = articles.value.findIndex(article => article.id === form.id);
+          if (index !== -1) {
+            articles.value.splice(index, 1, response.data);
+          }
+        } else {
+          articles.value.push(response.data);
+        }
+
         form.id = null;
         form.title = '';
         form.content = '';
@@ -51,25 +58,25 @@ export default {
     }
 
     async function load() {
-  console.log ('Load button clicked');
-  try {
-    const response = await axios.get('http://localhost:3000/articles');
-    articles.value = response.data;
-    console.log('Articles loaded successfully:', articles.value);
-  } catch (error) {
-    console.error('Error loading articles:', error);
-  }
-}
+      console.log('Load button clicked');
+      try {
+        const response = await axios.get('http://localhost:3000/articles');
+        articles.value = response.data;
+        console.log('Articles loaded successfully:', articles.value);
+      } catch (error) {
+        console.error('Error loading articles:', error);
+      }
+    }
 
-async function del(id) {
-  console.log ('Delete button clicked for article with id:', id);
-  try {
-    await axios.delete(`http://localhost:3000/articles/${id}`);
-    articles.value = articles.value.filter(article => article.id !== id);
-  } catch (error) {
-    console.error('Error deleting article:', error);
-  }
-}
+    async function del(id) {
+      console.log('Delete button clicked for article with ID:', id);
+      try {
+        await axios.delete(`http://localhost:3000/articles/${id}`);
+        articles.value = articles.value.filter(article => article.id !== id);
+      } catch (error) {
+        console.error('Error deleting article:', error);
+      }
+    }
 
     function edit(article) {
       form.id = article.id;
@@ -158,4 +165,3 @@ async function del(id) {
   color: black; /* Ubah warna tulisan menjadi hitam */
 }
 </style>
-
