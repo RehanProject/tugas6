@@ -1,7 +1,6 @@
 <template>
   <div class="container">
     <form @submit.prevent="save" class="form">
-      <input type="number" v-model="form.id" placeholder="ID" class="input"/><br />
       <input type="text" v-model="form.title" placeholder="Title" class="input"/><br />
       <textarea v-model="form.content" placeholder="Content" class="textarea"></textarea><br />
       <button type="submit" class="btn btn-save">Save</button>
@@ -19,52 +18,31 @@
 </template>
 
 <script>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, reactive } from 'vue';
 import axios from 'axios';
 
 export default {
   setup() {
     const form = reactive({
-      id: null,
       title: '',
       content: '',
     });
 
     const articles = ref([]);
+    const deletedArticleIds = ref([]);
 
     async function save() {
       try {
-        const url = form.id
-          ? `http://localhost:3000/articles/${form.id}`
-          : 'http://localhost:3000/articles';
-        const method = form.id ? 'put' : 'post';
+        const url = 'http://localhost:3000/articles';
+        const method = 'post';
         const response = await axios({ url, method, data: form });
         
-        if (form.id) {
-          const index = articles.value.findIndex(article => article.id === form.id);
-          if (index !== -1) {
-            articles.value.splice(index, 1, response.data);
-          }
-        } else {
-          articles.value.push(response.data);
-        }
+        articles.value.push(response.data);
 
-        form.id = null;
         form.title = '';
         form.content = '';
       } catch (error) {
         console.error('Error saving article:', error);
-      }
-    }
-
-    async function load() {
-      console.log('Load button clicked');
-      try {
-        const response = await axios.get('http://localhost:3000/articles');
-        articles.value = response.data;
-        console.log('Articles loaded successfully:', articles.value);
-      } catch (error) {
-        console.error('Error loading articles:', error);
       }
     }
 
@@ -73,20 +51,36 @@ export default {
       try {
         await axios.delete(`http://localhost:3000/articles/${id}`);
         articles.value = articles.value.filter(article => article.id !== id);
+        deletedArticleIds.value.push(id); // Tambahkan ID artikel yang dihapus ke dalam deletedArticleIds
       } catch (error) {
         console.error('Error deleting article:', error);
       }
     }
 
     function edit(article) {
-      form.id = article.id;
       form.title = article.title;
       form.content = article.content;
     }
 
-    onMounted(load);
+    async function load() {
+      try {
+        let deletedArticles = [];
 
-    return { form, articles, save, load, edit, del };
+        if (deletedArticleIds.value.length > 0) {
+          const response = await axios.get('http://localhost:3000/articles');
+          deletedArticles = response.data.filter(article => deletedArticleIds.value.includes(article.id));
+        }
+
+        const response = await axios.get('http://localhost:3000/articles');
+        articles.value = response.data.concat(deletedArticles);
+
+        console.log('Articles loaded successfully:', articles.value);
+      } catch (error) {
+        console.error('Error loading articles:', error);
+      }
+    }
+
+    return { form, articles, save, del, load };
   },
 };
 </script>
