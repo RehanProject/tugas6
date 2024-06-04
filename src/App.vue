@@ -1,162 +1,224 @@
 <template>
-  <div class="container">
-    <form @submit.prevent="save" class="form">
-      <input type="text" v-model="form.title" placeholder="Title" class="input"/><br />
-      <textarea v-model="form.content" placeholder="Content" class="textarea"></textarea><br />
-      <button type="submit" class="btn btn-save">Save</button>
-    </form>
-    <ul class="article-list">
-      <li v-for="article in articles" :key="article.id" class="article-item">
-        <h3>{{ article.title }}</h3>
-        <p>{{ article.content }}</p>
-        <button @click="edit(article)" class="btn btn-edit">Edit</button>
-        <button @click="del(article.id)" class="btn btn-delete">Delete</button>
-      </li>
-    </ul>
-    <button @click="load" class="btn btn-load">Load</button>
+  <div id="app">
+    <div class="container">
+      <section class="section">
+        <h1>Posts</h1>
+        <ul class="posts">
+          <li v-for="post in posts" :key="post.id" class="post-item">
+            <h2>{{ post.title }}</h2>
+            <p>{{ post.content }}</p>
+            <button @click="deletePost(post.id)">Delete</button>
+          </li>
+        </ul>
+        <form @submit.prevent="addPost">
+          <input type="text" v-model="newPost.title" placeholder="Title">
+          <textarea v-model="newPost.content" placeholder="Content"></textarea>
+          <button type="submit">Post</button>
+        </form>
+      </section>
+
+      <section class="section">
+        <h1>Comments</h1>
+        <ul class="comments">
+          <li v-for="comment in comments" :key="comment.id" class="comment-item">
+            <p>{{ comment.content }}</p>
+            <button @click="deleteComment(comment.id)">Delete</button>
+          </li>
+        </ul>
+        <form @submit.prevent="addComment">
+          <textarea v-model="newComment.content" placeholder="Add a comment"></textarea>
+          <button type="submit">Comment</button>
+        </form>
+      </section>
+
+      <section class="section">
+        <h1>Profile</h1>
+        <div v-if="profile" class="profile">
+          <p><strong>Name:</strong> {{ profile.name }}</p>
+          <p><strong>Age: 20</strong> {{ profile.age }}</p>
+          <p><strong>Email: rehantifanno@gmail.com</strong> {{ profile.email }}</p>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, reactive } from 'vue';
-import axios from 'axios';
+import { ref, onMounted } from 'vue'
 
 export default {
+  name: 'App',
   setup() {
-    const form = reactive({
-      title: '',
-      content: '',
-    });
+    const posts = ref([])
+    const comments = ref([])
+    const profile = ref(null)
+    const newPost = ref({ title: '', content: '' })
+    const newComment = ref({ content: '' })
 
-    const articles = ref([]);
-    const deletedArticleIds = ref([]);
+    onMounted(async () => {
+      // Fetch posts
+      let response = await fetch('http://localhost:3000/posts')
+      posts.value = await response.json()
 
-    async function save() {
-      try {
-        const url = 'http://localhost:3000/articles';
-        const method = 'post';
-        const response = await axios({ url, method, data: form });
-        
-        articles.value.push(response.data);
+      // Fetch comments
+      response = await fetch('http://localhost:3000/comments')
+      comments.value = await response.json()
 
-        form.title = '';
-        form.content = '';
-      } catch (error) {
-        console.error('Error saving article:', error);
+      // Fetch profile
+      response = await fetch('http://localhost:3000/profile')
+      profile.value = await response.json()
+    })
+
+    const addPost = async () => {
+      const response = await fetch('http://localhost:3000/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newPost.value)
+      })
+
+      if (response.ok) {
+        const postData = await response.json()
+        posts.value.push(postData)
+        newPost.value = { title: '', content: '' }
       }
     }
 
-    async function del(id) {
-      console.log('Delete button clicked for article with ID:', id);
-      try {
-        await axios.delete(`http://localhost:3000/articles/${id}`);
-        articles.value = articles.value.filter(article => article.id !== id);
-        deletedArticleIds.value.push(id); // Tambahkan ID artikel yang dihapus ke dalam deletedArticleIds
-      } catch (error) {
-        console.error('Error deleting article:', error);
+    const deletePost = async (postId) => {
+      const response = await fetch(`http://localhost:3000/posts/${postId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        posts.value = posts.value.filter(post => post.id !== postId)
       }
     }
 
-    function edit(article) {
-      form.title = article.title;
-      form.content = article.content;
-    }
+    const addComment = async () => {
+      const response = await fetch('http://localhost:3000/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newComment.value)
+      })
 
-    async function load() {
-      try {
-        let deletedArticles = [];
-
-        if (deletedArticleIds.value.length > 0) {
-          const response = await axios.get('http://localhost:3000/articles');
-          deletedArticles = response.data.filter(article => deletedArticleIds.value.includes(article.id));
-        }
-
-        const response = await axios.get('http://localhost:3000/articles');
-        articles.value = response.data.concat(deletedArticles);
-
-        console.log('Articles loaded successfully:', articles.value);
-      } catch (error) {
-        console.error('Error loading articles:', error);
+      if (response.ok) {
+        const commentData = await response.json()
+        comments.value.push(commentData)
+        newComment.value = { content: '' }
       }
     }
 
-    return { form, articles, save, del, load, edit };
-  },
-};
+    const deleteComment = async (commentId) => {
+      const response = await fetch(`http://localhost:3000/comments/${commentId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        comments.value = comments.value.filter(comment => comment.id !== commentId)
+      }
+    }
+
+    return {
+      posts,
+      comments,
+      profile,
+      newPost,
+      newComment,
+      addPost,
+      deletePost,
+      addComment,
+      deleteComment
+    }
+  }
+}
 </script>
 
-
 <style scoped>
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
+body {
   font-family: Arial, sans-serif;
-  background-color: #f9f9f9;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 20px;
+}
+
+#app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  max-width: 800px;
+  background-color: #fff;
+  padding: 20px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.form {
-  margin-bottom: 20px;
+.section {
+  margin-bottom: 40px;
 }
 
-.input, .textarea {
+h1 {
+  color: #42b983;
+  border-bottom: 2px solid #42b983;
+  padding-bottom: 10px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.posts, .comments {
+  margin: 0;
+  padding: 0;
+}
+
+.post-item, .comment-item {
+  background-color: #f9f9f9;
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.post-item h2 {
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.profile p {
+  margin: 10px 0;
+}
+
+form {
+  margin-top: 20px;
+}
+
+form textarea {
+  display: block;
   width: 100%;
+  margin-bottom: 10px;
   padding: 10px;
-  margin: 5px 0;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-.btn {
-  padding: 10px 15px;
-  margin: 5px 0;
+form button {
+  padding: 10px 20px;
+  background-color: #42b983;
+  color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.btn-save {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.btn-edit {
-  background-color: #2196F3;
-  color: white;
-}
-
-.btn-delete {
-  background-color: #f44336;
-  color: white;
-}
-
-.btn-load {
-  background-color: #ff9800;
-  color: white;
-}
-
-.article-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-.article-item {
-  background-color: #fff;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.article-item h3 {
-  margin: 0 0 10px;
-  color: black; /* Ubah warna tulisan menjadi hitam */
-}
-
-.article-item p {
-  margin: 0 0 10px;
-  color: black; /* Ubah warna tulisan menjadi hitam */
+form button:hover {
+  background-color: #2c7a63;
 }
 </style>

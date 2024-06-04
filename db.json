@@ -1,14 +1,23 @@
 {
-  "articles": [
+  "posts": [
     {
-      "id": "503e",
-      "title": "a",
-      "content": "a"
-    },
-    {
-      "id": "9ba5",
+      "id": "0d8d",
       "title": "a",
       "content": "a"
     }
-  ]
+  ],
+  "comments": [
+    {
+      "id": "2",
+      "text": "another comment about post 1",
+      "postId": null
+    },
+    {
+      "id": "6350",
+      "content": "a"
+    }
+  ],
+  "profile": {
+    "name": "Rehan Tifanno"
+  }
 }
